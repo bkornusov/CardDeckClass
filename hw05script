@@ -1,0 +1,277 @@
+Script started on Fri May 10 03:29:23 2019
+[?1034hbash-3.2$ cat card.h
+// Batyr Kornusov Homework assignment 5
+// Card class from section 6.8.1
+// This file contains Card class definition
+
+#ifndef CARD_H
+#define CARD_H
+
+#include <QStringList>
+#include <QString>
+#include <QTextStream>
+
+static QStringList Faces = {"A","2","3","4","5","6","7","8","9","T","J","Q","K"};
+static QStringList Suits = {"Spades", "Hearts", "Diamonds","Clubs"};
+
+class Card {
+public:
+    int FaceNbr;
+    int SuitNbr;
+    Card(int faceNbr, int suitNbr);
+    QString toString();
+    QString getFace();
+    QString getSuit();
+    int getValue();
+    int randRange(int min, int max);
+};
+
+#endif // CARD_H
+bash-3.2$ cat carddeck.h
+// This file contains CardDeck class definition
+
+#ifndef CARDDECK_H
+#define CARDDECK_H
+
+#include "card.h"
+#include "cardhand.h"
+
+class CardDeck {
+public:
+    QList<Card> deck;
+    CardDeck() {
+        srand(time_t(nullptr));
+        for (int i = 0; i < 52; i++) {
+            deck[i] = Card(i%13, i/13);
+        }
+    }
+    CardHand deal(int handSize);
+    QString toString();
+    int getCardsLeft();
+    void restoreDeck();
+    void shuffle();
+};
+
+#endif // CARDDECK_H
+bash-3.2$ cat cardhand.h
+// This file contains CardHand class definition
+
+#ifndef CARDHAND_H
+#define CARDHAND_H
+
+
+
+#include "card.h"
+
+class CardHand{
+public:
+    QList<Card> hand;
+    CardHand();
+    int getValue();
+    QString toString();
+    void append(Card c);
+};
+
+#endif // CARDHAND_H
+bash-3.2$ cat cr[Kard.h[Kcpp
+#include "card.h"
+
+
+Card::Card(int faceNbr, int suitNbr):
+    FaceNbr(faceNbr), SuitNbr(suitNbr) {}
+
+QString Card::toString() {
+    QString output = Faces[FaceNbr] + "of" + Suits[SuitNbr];
+    return output;
+}
+
+QString Card::getFace() {
+    return Faces[FaceNbr];
+}
+
+QString Card::getSuit(){
+    return Suits[SuitNbr];
+}
+
+int Card::getValue(){
+    if (FaceNbr == 10) return 1;
+    else if (FaceNbr == 11) return 2;
+    else if (FaceNbr == 12) return 3;
+    else if (FaceNbr == 0) return 4;
+    else return 0;
+}
+
+int randRange(int min, int max) {
+    return (min + rand() % (max - min + 1));
+}
+bash-3.2$ cat[Krt[Kd [K[K[K[K[Ka[Kcat carddeck.cpp
+#include "carddeck.h"
+
+CardHand CardDeck::deal(int handSize) {
+    CardHand newHand;
+    for (int i = 0; i < handSize; i++) {
+        newHand.append(deck.takeAt(rand() % 52));
+    }
+    return newHand;
+}
+
+QString CardDeck::toString() {
+    QString output;
+    for (Card c : deck) {
+        output.append(c.toString() + "\n");
+    }
+    return output;
+}
+int CardDeck::getCardsLeft(){
+    return deck.length();
+}
+void CardDeck::restoreDeck(){
+    deck.clear();
+    int k = 0;
+    for (int i = 0; i < 52; i++) {
+        deck[i] = Card(i%13, i/13);
+    }
+}
+
+void CardDeck::shuffle() {
+
+}
+bash-3.2$ cat cardhand.cpp
+#include "cardhand.h"
+
+
+CardHand::CardHand() {
+    hand.reserve(5);
+}
+
+int CardHand::getValue() {
+    int value = 0;
+    for (Card c : hand) {
+        value += c.getValue();
+    }
+    return value;
+}
+QString CardHand::toString() {
+    QString output;
+    for (Card c : hand) {
+        output.append(c.toString() + "\t");
+    }
+    return output;
+}
+
+void CardHand::append(Card c) {
+    hand.append(c);
+}
+bash-3.2$ cat main.cpp
+#include "mainwindow.h"
+#include "carddeck.cpp"
+#include "cardhand.h"
+#include <QApplication>
+#include <QtGui>
+#include <QMessageBox>
+#include <QInputDialog>
+
+int main(int argc, char *argv[])
+{
+    QApplication a(argc, argv);
+    MainWindow mainwindow;
+    mainwindow.show();
+    QTextStream cout(stdout);
+    CardDeck deck;
+    CardHand hand;
+    int handSize, playerScore, progScore;
+    cout << "How many cards in a hand? " << flush;
+    handSize = QInputDialog::getInt(0, QString("getInt()"),
+        QString("How many cards in hand?"), 1, 5);
+    QMessageBox::StandardButton sb;
+    do {
+        hand = deck.deal(handSize);
+        cout << "Here is your hand:" << endl;
+        cout << hand.toString() << endl;
+        playerScore = hand.getValue();
+        cout << QString("Your score is: %1 points.")
+                         .arg(playerScore) << endl;
+        // Now a hand for the dealer:
+        hand = deck.deal(handSize);
+        progScore = hand.getValue();
+        cout << "Here is my hand:" << endl;
+        cout << hand.toString() << endl;
+        cout << QString("My score is: %1 points.")
+                         .arg(progScore) << endl;
+        cout << QString("%1 win!!")
+              .arg((playerScore > progScore)?"You":"I") << endl;
+        sb = QMessageBox::question(0, QString("QMessageBox::question()"),
+            QString("Another hand?"), QMessageBox::Yes | QMessageBox::No);
+
+    } while (sb == QMessageBox::Yes);
+
+    return a.exec();
+}
+bash-3.2$ cat hw5.pro
+#-------------------------------------------------
+#
+# Project created by QtCreator 2019-05-06T02:52:44
+#
+#-------------------------------------------------
+
+QT       += core gui
+
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+
+TARGET = hw5
+TEMPLATE = app
+
+# The following define makes your compiler emit warnings if you use
+# any feature of Qt which has been marked as deprecated (the exact warnings
+# depend on your compiler). Please consult the documentation of the
+# deprecated API in order to know how to port your code away from it.
+DEFINES += QT_DEPRECATED_WARNINGS
+
+# You can also make your code fail to compile if you use deprecated APIs.
+# In order to do so, uncomment the following line.
+# You can also select to disable deprecated APIs only up to a certain version of Qt.
+#DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
+
+CONFIG += c++11
+
+SOURCES += \
+        main.cpp \
+        mainwindow.cpp \
+    card.cpp \
+    carddeck.cpp \
+    cardhand.cpp
+
+HEADERS += \
+        mainwindow.h \
+    card.h \
+    carddeck.h \
+    cardhand.h
+
+FORMS += \
+        mainwindow.ui
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target
+bash-3.2$ qmake
+Info: creating stash file /Users/flowmaster/hw5/.qmake.stash
+bash-3.2$ make
+/Users/flowmaster/Qt/5.12.2/clang_64/bin/uic mainwindow.ui -o ui_mainwindow.h
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -c -pipe -stdlib=libc++ -O2 -std=gnu++11  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.12 -Wall -W -fPIC -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -I. -I../Qt/5.12.2/clang_64/lib/QtWidgets.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtGui.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/AGL.framework/Headers/ -I. -I../Qt/5.12.2/clang_64/mkspecs/macx-clang -F/Users/flowmaster/Qt/5.12.2/clang_64/lib -o main.o main.cpp
+In file included from main.cpp:2:
+[1m./carddeck.cpp:23:9: [0m[0;1;35mwarning: [0m[1munused variable 'k' [-Wunused-variable][0m
+    int k = 0;
+[0;1;32m        ^
+[0m1 warning generated.
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -c -pipe -stdlib=libc++ -O2 -std=gnu++11  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.12 -Wall -W -fPIC -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -I. -I../Qt/5.12.2/clang_64/lib/QtWidgets.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtGui.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/AGL.framework/Headers/ -I. -I../Qt/5.12.2/clang_64/mkspecs/macx-clang -F/Users/flowmaster/Qt/5.12.2/clang_64/lib -o mainwindow.o mainwindow.cpp
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -c -pipe -stdlib=libc++ -O2 -std=gnu++11  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.12 -Wall -W -fPIC -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -I. -I../Qt/5.12.2/clang_64/lib/QtWidgets.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtGui.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/AGL.framework/Headers/ -I. -I../Qt/5.12.2/clang_64/mkspecs/macx-clang -F/Users/flowmaster/Qt/5.12.2/clang_64/lib -o card.o card.cpp
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -c -pipe -stdlib=libc++ -O2 -std=gnu++11  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.12 -Wall -W -fPIC -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -I. -I../Qt/5.12.2/clang_64/lib/QtWidgets.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtGui.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/AGL.framework/Headers/ -I. -I../Qt/5.12.2/clang_64/mkspecs/macx-clang -F/Users/flowmaster/Qt/5.12.2/clang_64/lib -o cardhand.o cardhand.cpp
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -pipe -stdlib=libc++ -O2 -std=gnu++11  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.12 -Wall -W -dM -E -o moc_predefs.h ../Qt/5.12.2/clang_64/mkspecs/features/data/dummy.cpp
+/Users/flowmaster/Qt/5.12.2/clang_64/bin/moc -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB --include /Users/flowmaster/hw5/moc_predefs.h -I/Users/flowmaster/Qt/5.12.2/clang_64/mkspecs/macx-clang -I/Users/flowmaster/hw5 -I/Users/flowmaster/Qt/5.12.2/clang_64/lib/QtWidgets.framework/Headers -I/Users/flowmaster/Qt/5.12.2/clang_64/lib/QtGui.framework/Headers -I/Users/flowmaster/Qt/5.12.2/clang_64/lib/QtCore.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1 -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/10.0.0/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/usr/include -F/Users/flowmaster/Qt/5.12.2/clang_64/lib mainwindow.h -o moc_mainwindow.cpp
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -c -pipe -stdlib=libc++ -O2 -std=gnu++11  -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.12 -Wall -W -fPIC -DQT_DEPRECATED_WARNINGS -DQT_NO_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB -I. -I../Qt/5.12.2/clang_64/lib/QtWidgets.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtGui.framework/Headers -I../Qt/5.12.2/clang_64/lib/QtCore.framework/Headers -I. -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/OpenGL.framework/Headers -I/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/Applications/Xcode10.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk/System/Library/Frameworks/AGL.framework/Headers/ -I. -I../Qt/5.12.2/clang_64/mkspecs/macx-clang -F/Users/flowmaster/Qt/5.12.2/clang_64/lib -o moc_mainwindow.o moc_mainwindow.cpp
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++ -stdlib=libc++ -headerpad_max_install_names  -arch x86_64 -Wl,-syslibroot,/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.14.sdk -mmacosx-version-min=10.12 -Wl,-rpath,@executable_path/../Frameworks -Wl,-rpath,/Users/flowmaster/Qt/5.12.2/clang_64/lib -o hw5.app/Contents/MacOS/hw5 main.o mainwindow.o card.o cardhand.o moc_mainwindow.o   -F/Users/flowmaster/Qt/5.12.2/clang_64/lib -framework QtWidgets -framework QtGui -framework QtCore -framework DiskArbitration -framework IOKit -framework OpenGL -framework AGL   
+bash-3.2$ exit
+exit
+
+Script done on Fri May 10 03:30:37 2019
